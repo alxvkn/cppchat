@@ -11,4 +11,5 @@ client: client.o
 %.o: %.cpp
 	$(CXX) -c $^
 
-clean: rm *.o client server
+clean:
+	rm *.o client server
