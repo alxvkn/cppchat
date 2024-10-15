@@ -10,6 +10,7 @@
 
 class Socket {
 public:
+    using Address = std::pair<std::string, unsigned short>;
     Socket() {
         socket_fd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -24,10 +25,10 @@ public:
         close(socket_fd);
     }
 
-    void bind(std::string address, unsigned short port) {
+    void bind(std::string host, unsigned short port) {
         struct sockaddr_in socket_addr;
         socket_addr.sin_family = AF_INET;
-        socket_addr.sin_addr.s_addr = inet_addr(address.c_str());
+        socket_addr.sin_addr.s_addr = inet_addr(host.c_str());
         socket_addr.sin_port = htons(port);
 
         if (::bind(socket_fd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1) {
@@ -41,14 +42,17 @@ public:
         }
     }
 
-    Socket accept() {
+    std::pair<Socket, Address> accept() {
         struct sockaddr_in socket_addr;
         socklen_t addr_len = sizeof(socket_addr);
 
-        return Socket(::accept(socket_fd, (struct sockaddr*)&socket_addr, &addr_len));
+        return std::pair<Socket, Address>(
+            Socket(::accept(socket_fd, (struct sockaddr*)&socket_addr, &addr_len)),
+            Address(inet_ntoa(socket_addr.sin_addr), ntohs(socket_addr.sin_port))
+        );
     }
 
-    std::pair<std::string, unsigned short> getsockname() {
+    Address getsockname() {
         struct sockaddr_in socket_addr;
         socklen_t addr_len;
 
@@ -73,15 +77,12 @@ int main (int argc, char *argv[]) {
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 1);
     s.bind("0.0.0.0", 1234);
     s.listen(0);
-    Socket c = s.accept();
 
-    auto [ address, port ] = s.getsockname();
+    auto [ connection, address ] = s.accept();
 
-    std::cout << address << ", " << port << std::endl;
+    auto [ host, port ] = address;
 
-    auto [ c_address, c_port ] = c.getsockname();
-
-    std::cout << c_address << ", " << c_port << std::endl;
+    std::cout << host << ", " << port << std::endl;
 
     return 0;
 }
