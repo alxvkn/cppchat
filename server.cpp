@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <utility>
+#include <vector>
 
 class Socket {
 public:
@@ -46,10 +47,15 @@ public:
         struct sockaddr_in socket_addr;
         socklen_t addr_len = sizeof(socket_addr);
 
-        return std::pair<Socket, Address>(
+        return {
             Socket(::accept(socket_fd, (struct sockaddr*)&socket_addr, &addr_len)),
             Address(inet_ntoa(socket_addr.sin_addr), ntohs(socket_addr.sin_port))
-        );
+        };
+    }
+
+    std::vector<char> recv(int len, int flags = 0) {
+        std::vector<char> buf;
+        buf.reserve(len);
     }
 
     Address getsockname() {
@@ -61,7 +67,7 @@ public:
         std::string address = inet_ntoa(socket_addr.sin_addr);
         unsigned short port = ntohs(socket_addr.sin_port);
 
-        return std::pair<std::string, unsigned short>(address, port);
+        return { address, port };
     }
 
     void setsockopt(int level, int optname, int value) {
