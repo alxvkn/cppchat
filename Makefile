@@ -1,4 +1,5 @@
 CXX = clang++
+CXXFLAGS = --std=c++17
 
 all: server client
 
@@ -9,7 +10,7 @@ client: client.o
 	$(CXX) $^ -o $@
 
 %.o: %.cpp
-	$(CXX) -c $^
+	$(CXX) $(CXXFLAGS) -c $^
 
 clean:
 	rm *.o client server
