@@ -50,11 +50,11 @@ void Socket::close() {
     socket_fd = -1;
 }
 
-void Socket::bind(std::string host, unsigned short port) {
+void Socket::bind(Address address) {
     struct sockaddr_in socket_addr;
     socket_addr.sin_family = AF_INET;
-    socket_addr.sin_addr.s_addr = inet_addr(host.c_str());
-    socket_addr.sin_port = htons(port);
+    socket_addr.sin_addr.s_addr = inet_addr(address.host.c_str());
+    socket_addr.sin_port = htons(address.port);
 
     if (::bind(socket_fd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1) {
         throw std::exception();
@@ -78,7 +78,7 @@ std::pair<Socket, Socket::Address> Socket::accept() {
 
     return {
         std::move(Socket(conn_fd)),
-        Address(inet_ntoa(socket_addr.sin_addr), ntohs(socket_addr.sin_port))
+        Address { inet_ntoa(socket_addr.sin_addr), ntohs(socket_addr.sin_port) }
     };
 }
 

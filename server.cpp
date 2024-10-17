@@ -15,7 +15,7 @@
 int main (int argc, char *argv[]) {
     Socket s;
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 1);
-    s.bind("0.0.0.0", 1234);
+    s.bind({ "0.0.0.0", 1234 });
     s.listen(0);
 
     auto [ c, address ] = s.accept();

@@ -4,7 +4,11 @@
 
 class Socket {
 public:
-    using Address = std::pair<std::string, unsigned short>;
+    struct Address {
+        std::string host;
+        unsigned short port;
+    };
+
     Socket();
 
     // move constructor
@@ -16,7 +20,7 @@ public:
 
     void close();
 
-    void bind(std::string host, unsigned short port);
+    void bind(Address);
 
     void listen(int queue);
 
