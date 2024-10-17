@@ -3,10 +3,10 @@ CXXFLAGS = --std=c++17
 
 all: server client
 
-server: server.o
+server: server.o Socket.o
 	$(CXX) $^ -o $@
 
-client: client.o
+client: client.o Socket.o
 	$(CXX) $^ -o $@
 
 %.o: %.cpp
