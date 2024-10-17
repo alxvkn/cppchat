@@ -11,13 +11,10 @@
 #include <utility>
 #include <vector>
 
-#ifdef DEBUG
-#define dbgout(expr) do { std::cout << expr << std::endl; } while (0)
-#else
-#define dbgout(expr)
-#endif
-
 #include "Socket.hpp"
+#include "def.h"
+
+// TODO: exceptions with explanations
 
 Socket::Socket() {
     socket_fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -124,6 +121,7 @@ int Socket::send(const std::vector<char>& buf, int flags) {
 int Socket::send(const std::string& str, int flags) {
     ssize_t n_sent = ::send(socket_fd, str.data(), str.length(), flags);
 
+    dbgout("send(): n_sent = " << n_sent);
     if (n_sent == -1)
         throw std::exception();
 

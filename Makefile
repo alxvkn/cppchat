@@ -1,7 +1,12 @@
 CXX = clang++
 CXXFLAGS = --std=c++17
 
+DEBUG_FLAGS = -g -DDEBUG=1
+
 all: server client
+
+debug: CXXFLAGS += $(DEBUG_FLAGS)
+debug: server client
 
 server: server.o Socket.o
 	$(CXX) $^ -o $@
@@ -14,3 +19,5 @@ client: client.o Socket.o
 
 clean:
 	rm *.o client server
+
+.PHONY: clean

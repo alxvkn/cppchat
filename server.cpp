@@ -1,16 +1,40 @@
+#include <algorithm>
+#include <functional>
 #include <iostream>
+#include <thread>
 
 #include <sys/socket.h>
 
 #include "Socket.hpp"
+#include "def.h"
 
-#define DEBUG
+class User {
+public:
+    User(std::string username, std::string password) : username(username) {
+        password_hash = std::hash<std::string>{}(password);
+    }
 
-#ifdef DEBUG
-#define dbgout(expr) do { std::cout << expr << std::endl; } while (0)
-#else
-#define dbgout(expr)
-#endif
+    std::string username;
+    size_t password_hash;
+};
+
+class UserManager {
+public:
+    bool login(std::string username, std::string password);
+};
+
+void client_handler(Socket connection) {
+    std::vector<char> msg;
+    while ((msg = connection.recv(32)).size() != 0) {
+        std::string msg_string = std::string(msg.begin(), msg.end());
+
+        std::cout << msg_string << std::endl;
+        if (msg_string == "/q")
+            break;
+
+        connection.send(std::string(msg_string.rbegin(), msg_string.rend()));
+    }
+}
 
 int main (int argc, char *argv[]) {
     Socket s;
@@ -18,20 +42,17 @@ int main (int argc, char *argv[]) {
     s.bind({ "0.0.0.0", 1234 });
     s.listen(0);
 
-    auto [ c, address ] = s.accept();
+    std::vector<std::thread> threads;
 
-    auto [ host, port ] = address;
+    while (true) {
+        auto [ c, address ] = s.accept();
 
-    dbgout(host << ", " << port);
+        auto [ host, port ] = address;
 
-    std::vector<char> msg = c.recv(32);
+        dbgout(host << ", " << port);
 
-    std::cout << std::string(msg.begin(), msg.end()) << std::endl;
-
-    std::cout << "response > ";
-    std::string response;
-    std::cin >> response;
-    c.send(std::vector<char>(response.begin(), response.end()));
+        threads.push_back(std::thread(client_handler, std::move(c)));
+    }
 
     return 0;
 }
