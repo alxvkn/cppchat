@@ -22,6 +22,8 @@ public:
 
     void bind(Address);
 
+    void connect(Address);
+
     void listen(int queue);
 
     std::pair<Socket, Address> accept();
@@ -29,6 +31,7 @@ public:
     std::vector<char> recv(size_t n, int flags = 0);
 
     int send(const std::vector<char>& buf, int flags = 0);
+    int send(const std::string& str, int flags = 0);
 
     Address getsockname();
 

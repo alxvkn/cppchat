@@ -61,6 +61,16 @@ void Socket::bind(Address address) {
     }
 }
 
+void Socket::connect(Address address) {
+    struct sockaddr_in socket_addr;
+    socket_addr.sin_family = AF_INET;
+    socket_addr.sin_addr.s_addr = inet_addr(address.host.c_str());
+    socket_addr.sin_port = htons(address.port);
+
+    if (::connect(socket_fd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)))
+        throw std::exception();
+}
+
 void Socket::listen(int queue) {
     if (::listen(socket_fd, queue)) {
         throw std::exception();
@@ -104,6 +114,15 @@ std::vector<char> Socket::recv(size_t n, int flags) {
 
 int Socket::send(const std::vector<char>& buf, int flags) {
     ssize_t n_sent = ::send(socket_fd, buf.data(), buf.size(), flags);
+
+    if (n_sent == -1)
+        throw std::exception();
+
+    return n_sent;
+}
+
+int Socket::send(const std::string& str, int flags) {
+    ssize_t n_sent = ::send(socket_fd, str.data(), str.length(), flags);
 
     if (n_sent == -1)
         throw std::exception();
