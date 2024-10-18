@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 
 #include "Socket.hpp"
 #include "def.h"
@@ -10,9 +11,18 @@ int main (int argc, char *argv[]) {
 
     s.connect({"127.0.0.1", PORT});
 
+    std::thread printer([&]{
+        while (true) {
+            auto msg = s.recv(256);
+            if (msg.size() == 0)
+                break;
+
+            std::cout << std::string(msg.begin(), msg.end()) << std::endl;
+        }
+    });
+
     while (true) {
         std::string msg;
-        std::cout << "> ";
         std::cin >> msg;
 
         try {
@@ -23,13 +33,6 @@ int main (int argc, char *argv[]) {
             std::cout << e.what();
             break;
         }
-
-        auto response = s.recv(32);
-
-        if (response.size() == 0)
-            break;
-
-        std::cout << std::string(response.begin(), response.end()) << std::endl;
     }
 
     return 0;
