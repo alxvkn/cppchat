@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = --std=c++17
+CXXFLAGS = --std=c++20
 
 DEBUG_FLAGS = -g -DDEBUG=1
 

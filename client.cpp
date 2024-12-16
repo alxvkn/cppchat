@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <thread>
 
 #include "Socket.hpp"
@@ -13,11 +14,11 @@ int main (int argc, char *argv[]) {
 
     std::thread printer([&]{
         while (true) {
-            auto msg = s.recv(256);
+            std::vector<char> msg = s.recv(256);
             if (msg.size() == 0)
                 break;
 
-            std::cout << std::string(msg.begin(), msg.end()) << std::endl;
+            std::cout << std::string(msg.begin(), msg.end()) << std::flush;
         }
     });
 

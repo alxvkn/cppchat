@@ -7,6 +7,7 @@
 #include <sstream>
 #include <thread>
 #include <memory>
+#include <format>
 
 #include <sys/socket.h>
 #include <unordered_map>
@@ -14,124 +15,59 @@
 #include "Socket.hpp"
 #include "def.h"
 
-class User {
-public:
-    User(std::string username, std::string password) : username(username) {
-        password_hash = std::hash<std::string>{}(password);
-    }
+class Server {
 
-    User(std::string username, size_t password_hash)
-        : username(username), password_hash(password_hash) {}
-
-    std::string username;
-    size_t password_hash;
 };
 
-class UserManager {
-    std::unordered_map<std::string, std::shared_ptr<Socket>> connected_users;
-    std::unordered_map<std::string, size_t> password_hashes;
-    std::string filename;
-public:
-    UserManager() = default;
-    UserManager(std::string filename) : filename(filename) {
-        std::ifstream in(filename);
-        std::string line;
+std::unordered_map<std::string, std::shared_ptr<Socket>> users;
 
-        while (std::getline(in, line)) {
-            std::stringstream line_stream(line);
-            std::string username;
-            size_t password_hash;
-
-            line_stream >> username >> password_hash;
-
-            password_hashes[username] = password_hash;
-        }
+void broadcast_message(const std::string& username, const std::string& msg) {
+    for (auto user : users) {
+        if (user.first != username)
+            user.second->send(std::format("{}: {}\n", username, msg));
     }
-    ~UserManager() {
-        save();
-    }
-
-    void save() {
-        std::ofstream out(filename);
-
-        for (auto [ username, password_hash ] : password_hashes) {
-            out << username << " " << password_hash << "\n";
-        }
-
-        out.close();
-    }
-
-    bool user_exists(std::string username) {
-        return password_hashes[username];
-    }
-
-    bool login(std::shared_ptr<Socket> connection, std::string username, std::string password) {
-        User user = User(username, password);
-
-        if (password_hashes[user.username] == user.password_hash) {
-            connected_users[user.username] = std::move(connection);
-
-            return true;
-        }
-        return false;
-    }
-
-    void logout(std::string username) {
-        connected_users.erase(username);
-    }
-
-    void sign_up(std::string username, std::string password) {
-        User user = User(username, password);
-        password_hashes[user.username] = user.password_hash;
-        std::cout << "sign_up: " << password_hashes.size()
-            << username << std::endl;
-        std::cout << "sign_up: " << connected_users.size() << std::endl;
-    }
-};
-
-UserManager user_manager("users.txt");
-
-std::string help(
-    "available commands:\n"
-    "/q - disconnect\n"
-    "/name <username> - change username"
-);
+}
 
 void client_worker(std::shared_ptr<Socket> connection_ptr) {
 
+    std::string nickname;
     std::vector<char> msg;
 
-    connection_ptr->send("please, enter your username");
-    msg = connection_ptr->recv(256);
-    std::string username, password;
-    username = std::string(msg.begin(), msg.end());
+    connection_ptr->send("please, enter your nickname: ");
 
-    if (user_manager.user_exists(username)) {
-        connection_ptr->send("now your password");
+    while (true) {
         msg = connection_ptr->recv(256);
-        password = std::string(msg.begin(), msg.end());
-    } else {
-        connection_ptr->send("you are not registered, please come up with a password");
-        msg = connection_ptr->recv(256);
-        password = std::string(msg.begin(), msg.end());
-        user_manager.sign_up(username, password);
+        nickname = std::string(msg.begin(), msg.end());
+
+        if (!users.count(nickname))
+            break;
+
+        connection_ptr->send("this nickname is currently taken,\n"
+                             "please choose another one: ");
     }
-    if (!user_manager.login(connection_ptr, username, password))
-        return;
 
+    users[nickname] = connection_ptr;
+    connection_ptr->send(std::format(
+        "you were successfully connected with the nickname {}\n",
+        nickname
+    ));
+
+    const std::string prompt = "> ";
+
+    connection_ptr->send(prompt);
     while ((msg = connection_ptr->recv(256)).size() != 0) {
         std::string msg_string = std::string(msg.begin(), msg.end());
 
         std::cout << msg_string << std::endl;
         if (msg_string == "/q")
             break;
-        else if (msg_string == "/help")
-            connection_ptr->send(help);
-        else {
-        }
+
+        broadcast_message(nickname, msg_string);
+
+        connection_ptr->send(std::format("\n{}", prompt));
     }
 
-    user_manager.logout(username);
+    users.erase(nickname);
 }
 
 int main (int argc, char *argv[]) {
@@ -166,8 +102,6 @@ int main (int argc, char *argv[]) {
         std::cin >> command;
         if (command == "q")
             break;
-        else if (command == "save")
-            user_manager.save();
     }
 
     end = true;
