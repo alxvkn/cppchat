@@ -48,6 +48,9 @@ void Socket::close() {
 }
 
 void Socket::bind(Address address) {
+    if (address.host.length() == 0)
+        address.host = "0.0.0.0";
+
     struct sockaddr_in socket_addr;
     socket_addr.sin_family = AF_INET;
     socket_addr.sin_addr.s_addr = inet_addr(address.host.c_str());
