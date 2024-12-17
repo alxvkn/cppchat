@@ -3,7 +3,7 @@
 #include <string>
 #include <thread>
 #include <memory>
-#include <format>
+#include <sstream>
 
 #include <sys/socket.h>
 #include <unordered_map>
@@ -17,9 +17,13 @@ class Server {
     std::unordered_map<std::string, std::shared_ptr<Socket>> users;
 
     void broadcast_message(const std::string& username, const std::string& msg) {
+        std::stringstream ss;
+
+        ss << username << ": " << msg;
+
         for (auto user : users) {
             if (user.first != username)
-                user.second->send(std::format("{}: {}\n", username, msg));
+                user.second->send(ss.str());
         }
     }
 
@@ -42,13 +46,18 @@ class Server {
                                  "please choose another one: ");
         }
 
-        users[nickname] = connection_ptr;
-        connection_ptr->send(std::format(
-            "you were successfully connected with the nickname {}\n",
-            nickname
-        ));
-        std::cout <<
-            std::format("{}:{} added as {}", addr.host, addr.port, nickname) << std::endl;
+        {
+            std::stringstream ss;
+
+            ss << "you were successfully connected with the nickname "
+                << nickname << "\n";
+
+            users[nickname] = connection_ptr;
+            connection_ptr->send(ss.str());
+        }
+
+        std::cout << addr.host << ":" << addr.port << " added as " << nickname
+            << std::endl;
 
         const std::string prompt = "> ";
 
@@ -62,7 +71,10 @@ class Server {
 
             broadcast_message(nickname, msg_string);
 
-            connection_ptr->send(std::format("\n{}", prompt));
+            std::stringstream ss;
+            ss << "\n" << prompt;
+
+            connection_ptr->send(ss.str());
         }
 
         users.erase(nickname);
@@ -80,11 +92,12 @@ public:
         s.listen(0);
 
         Socket::Address bound_address = s.getsockname();
-        std::cout << std::format(
-            "server is listening on {}:{}",
-            bound_address.host,
-            bound_address.port
-        ) << std::endl;
+
+        std::cout << "server is listening on "
+            << bound_address.host
+            << ":"
+            << bound_address.port
+            << std::endl;
 
         std::vector<std::thread> workers;
 
