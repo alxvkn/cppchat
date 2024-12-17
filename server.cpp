@@ -18,7 +18,6 @@
 #include "protocol.hpp"
 
 class Server {
-
     std::unordered_map<std::string, std::shared_ptr<Socket>> users;
 
     void broadcast_message(const std::string& username, const std::string& msg) {
@@ -29,6 +28,7 @@ class Server {
     }
 
     void client_worker(std::shared_ptr<Socket> connection_ptr) {
+        Socket::Address addr = connection_ptr->getsockname();
 
         std::string nickname;
         std::vector<char> msg;
@@ -51,6 +51,8 @@ class Server {
             "you were successfully connected with the nickname {}\n",
             nickname
         ));
+        std::cout <<
+            std::format("{}:{} added as {}", addr.host, addr.port, nickname) << std::endl;
 
         const std::string prompt = "> ";
 
@@ -82,11 +84,11 @@ public:
         s.listen(0);
 
         Socket::Address bound_address = s.getsockname();
-        dbgout(std::format(
+        std::cout << std::format(
             "server is listening on {}:{}",
             bound_address.host,
             bound_address.port
-        ));
+        ) << std::endl;
 
         std::vector<std::thread> workers;
 
