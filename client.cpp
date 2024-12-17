@@ -1,5 +1,5 @@
 #include <iostream>
-#include <iomanip>
+#include <string>
 #include <thread>
 
 #include "Socket.hpp"
@@ -8,9 +8,13 @@
 #define PORT 1234
 
 int main (int argc, char *argv[]) {
+    if (argc < 3) {
+        std::cout << "provide server host and port as positional arguments" << std::endl;
+        return 1;
+    }
     Socket s;
 
-    s.connect({"127.0.0.1", PORT});
+    s.connect({argv[1], (unsigned short)std::stoul((argv[2]))});
 
     std::thread printer([&]{
         while (true) {
