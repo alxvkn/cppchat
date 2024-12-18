@@ -28,7 +28,7 @@ int main (int argc, char *argv[]) {
 
     while (true) {
         std::string msg;
-        std::cin >> msg;
+        std::getline(std::cin, msg);
 
         try {
             s.send(msg);
