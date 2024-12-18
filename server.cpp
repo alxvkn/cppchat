@@ -11,9 +11,9 @@
 #include "Socket.hpp"
 #include "def.h"
 
-#include "protocol.hpp"
-
 class Server {
+    const std::string prompt = "> ";
+
     std::unordered_map<std::string, std::shared_ptr<Socket>> users;
 
     void broadcast_message(const std::string& username, const std::string& msg) {
@@ -23,7 +23,7 @@ class Server {
 
         for (auto user : users) {
             if (user.first != username)
-                user.second->send(ss.str());
+                user.second->send(ss.str() + "\n");
         }
     }
 
@@ -59,8 +59,6 @@ class Server {
         std::cout << addr.host << ":" << addr.port << " added as " << nickname
             << std::endl;
 
-        const std::string prompt = "> ";
-
         connection_ptr->send(prompt);
         while ((msg = connection_ptr->recv(256)).size() != 0) {
             std::string msg_string = std::string(msg.begin(), msg.end());
@@ -71,13 +69,14 @@ class Server {
 
             broadcast_message(nickname, msg_string);
 
-            std::stringstream ss;
-            ss << "\n" << prompt;
+            // std::stringstream ss;
+            // ss << "\n" << prompt;
 
-            connection_ptr->send(ss.str());
+            connection_ptr->send(prompt);
         }
 
         users.erase(nickname);
+        std::cout << nickname << " disconnected";
     }
 
 public:
