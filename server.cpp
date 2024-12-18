@@ -28,7 +28,7 @@ class Server {
     }
 
     void client_worker(std::shared_ptr<Socket> connection_ptr) {
-        Socket::Address addr = connection_ptr->getsockname();
+        Socket::Address addr = connection_ptr->getpeername();
 
         std::string nickname;
         std::vector<char> msg;
