@@ -143,6 +143,18 @@ Socket::Address Socket::getsockname() {
     return { address, port };
 }
 
+Socket::Address Socket::getpeername() {
+    struct sockaddr_in socket_addr;
+    socklen_t addr_len;
+
+    ::getpeername(socket_fd, (struct sockaddr*)&socket_addr, &addr_len);
+
+    std::string address = inet_ntoa(socket_addr.sin_addr);
+    unsigned short port = ntohs(socket_addr.sin_port);
+
+    return { address, port };
+}
+
 void Socket::setsockopt(int level, int optname, int value) {
     ::setsockopt(socket_fd, level, optname, &value, sizeof(value));
 }

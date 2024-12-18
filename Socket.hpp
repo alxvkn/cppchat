@@ -34,6 +34,7 @@ public:
     int send(const std::string& str, int flags = 0);
 
     Address getsockname();
+    Address getpeername();
 
     void setsockopt(int level, int optname, int value);
 
